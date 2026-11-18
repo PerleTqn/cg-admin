@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CG — Administration du catalogue</title>
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#07090e" />
+<link rel="icon" type="image/png" href="logo.png" />
+<style>
+:root{
+  --bg:#07090e; --panel:#0b1019; --panel2:#0f141f; --line:#ffffff1f; --line2:#ffffff47;
+  --g1:#22d3ee; --g2:#3b82f6; --text:#e2e8f0; --muted:#94a3b8; --danger:#f43f5e; --ok:#a3e635;
+  --font:system-ui,-apple-system,'Segoe UI',Roboto,Ubuntu,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased}
+body{min-height:100vh;overflow-x:hidden}
+a{color:inherit}
+button{font-family:inherit;cursor:pointer}
+.hidden{display:none!important}
+
+/* ---------- fond ---------- */
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:var(--bg)}
+.bg .veil{position:absolute;inset:0;background:linear-gradient(90deg,#07090ef5,#07090ee0)}
+.bg .glow{position:absolute;border-radius:50%;filter:blur(48px);background:radial-gradient(closest-side,#22d3ee33,#0000)}
+.bg .g1{width:36rem;height:28rem;left:-12rem;bottom:-14rem}
+.bg .g2{width:30rem;height:30rem;right:-10rem;top:-10rem;opacity:.7;background:radial-gradient(closest-side,#3b82f638,#0000)}
+.sparkle{position:absolute;filter:drop-shadow(0 0 .5em #22d3ee73)}
+.tw{animation:tw 3s ease-in-out infinite}.tw2{animation:tw 2.6s ease-in-out .7s infinite}
+@keyframes tw{0%,100%{opacity:.25;transform:scale(.85)}50%{opacity:.9;transform:scale(1.05)}}
+@media (prefers-reduced-motion:reduce){.tw,.tw2{animation:none}}
+.grad{padding-right:.1em;background:linear-gradient(90deg,var(--g1),var(--g2));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ---------- barre du haut ---------- */
+.top{position:fixed;z-index:50;left:0;top:0;width:100%;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:linear-gradient(to bottom,#000000bf,#00000059,transparent)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand img{width:36px;height:36px;object-fit:contain}
+.brand b{display:block;font-size:18px;font-style:italic;text-transform:uppercase;letter-spacing:.12em;line-height:1}
+.brand small{display:block;margin-top:3px;font-size:11px;letter-spacing:.18em;color:#ffffff73;line-height:1}
+.who{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
+
+/* ---------- boutons ---------- */
+.cta,.ghost{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 20px;border-radius:.45em;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;transition:filter .2s,transform .2s,background .2s,border-color .2s,color .2s;text-decoration:none}
+.cta{color:#07090e;border:1px solid transparent;background:linear-gradient(90deg,var(--g1),var(--g2))}
+.cta:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.cta[disabled]{opacity:.5;cursor:wait;transform:none}
+.ghost{color:#f4f4f5bf;background:transparent;border:1px solid var(--line2)}
+.ghost:hover{color:#fff;background:#ffffff0a;border-color:#ffffff80}
+.ghost.danger:hover{color:var(--danger);border-color:var(--danger)}
+.sm{padding:7px 12px;font-size:11px}
+.pill{display:inline-flex;align-items:center;gap:.45em;padding:.3em .75em;font-size:12px;color:#f4f4f5b3;background:#22d3ee14;border:1px solid #22d3ee59;border-radius:.45em}
+.pill b{color:var(--g1);font-weight:600}
+
+/* ---------- écran de connexion ---------- */
+.center{position:relative;z-index:10;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:96px 16px 40px;text-align:center}
+.hero h1{margin:18px 0 0;font-size:clamp(2.4rem,9vw,5.5rem);font-style:italic;text-transform:uppercase;font-weight:800;line-height:1.02;letter-spacing:-.01em}
+.hero h1 span{display:block}
+.hero p{max-width:440px;margin:18px auto 0;color:#ffffff8c;font-size:15px;line-height:1.6}
+.hero .cta{margin-top:30px;padding:14px 28px}
+.note{margin-top:18px;font-size:12px;color:var(--muted)}
+.msg{margin:22px auto 0;max-width:440px;padding:12px 16px;border-radius:.6em;font-size:13px;border:1px solid var(--line);background:#080a0e8c}
+.msg.err{border-color:#f43f5e66;color:#fda4af}
+
+/* ---------- mise en page ---------- */
+.layout{position:relative;z-index:10;min-height:100vh;display:grid;grid-template-columns:16rem minmax(0,1fr);padding-top:64px}
+aside{position:sticky;top:64px;align-self:start;height:calc(100vh - 64px);padding:24px 12px 24px 24px;overflow-y:auto}
+aside nav{display:flex;flex-direction:column;gap:6px}
+.tab{position:relative;display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;border-radius:.45em;border:1px solid transparent;background:transparent;color:#ffffff8c;font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;text-align:left;transition:all .2s}
+.tab:hover{border-color:#ffffff12;background:#ffffff09;color:#fff}
+.tab.on{border-color:#22d3ee59;background:#22d3ee17;color:#fff}
+.tab.on::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:99px;background:linear-gradient(to bottom,var(--g1),var(--g2))}
+.tab .n{margin-left:auto;font-size:11px;color:#ffffff59;font-variant-numeric:tabular-nums}
+.tab svg{flex:none;width:18px;height:18px}
+.tab.on svg{color:var(--g1)}
+main{padding:28px 24px 80px;min-width:0}
+.wrap{max-width:62rem;margin:0 auto}
+.head{position:relative;padding:8px 0 28px}
+.big{position:absolute;left:-6px;top:-.35em;font-size:clamp(6rem,13vw,10rem);font-weight:800;font-style:italic;line-height:1;color:transparent;-webkit-text-stroke:1.5px var(--g1);opacity:.25;pointer-events:none;user-select:none}
+.head .pill{position:relative}
+.head h2{position:relative;margin:16px 0 0;font-size:clamp(2.2rem,5vw,3.8rem);font-style:italic;text-transform:uppercase;font-weight:800;line-height:.95}
+.head p{position:relative;margin:14px 0 0;max-width:420px;color:#ffffff8c;font-size:14px;line-height:1.6}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 18px}
+.bar .grow{flex:1}
+.search{min-width:0;flex:1;max-width:320px}
+
+/* ---------- liste ---------- */
+ol.list{list-style:none;margin:0;padding:0}
+ol.list li{position:relative;display:flex;align-items:center;gap:16px;padding:14px 4px;border-top:1px solid #ffffff14}
+ol.list li:last-child{border-bottom:1px solid #ffffff14}
+ol.list li::before{content:"";position:absolute;top:-1px;left:0;height:1px;width:0;background:linear-gradient(90deg,var(--g1),var(--g2));transition:width .3s}
+ol.list li:hover::before{width:100%}
+.idx{width:28px;flex:none;font-size:12px;font-weight:600;color:#ffffff4d;font-variant-numeric:tabular-nums;transition:color .2s}
+li:hover .idx{color:var(--g1)}
+.thumb{width:44px;height:58px;flex:none;border-radius:.4em;object-fit:cover;background:#0f141f;border:1px solid var(--line)}
+.ttl{min-width:0;flex:1}
+.ttl b{display:block;font-size:17px;font-style:italic;text-transform:uppercase;font-weight:700;color:#ffffffd9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:transform .2s,color .2s}
+li:hover .ttl b{transform:translateX(4px);color:#fff}
+.ttl span{display:block;margin-top:3px;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acts{display:flex;gap:8px;flex:none}
+.empty{padding:44px 20px;border:1.5px dashed #ffffff47;border-radius:.9rem;background:#0000002e;text-align:center;color:var(--muted);font-size:14px;line-height:1.7}
+.empty b{display:block;color:#fff;margin-bottom:4px}
+
+/* ---------- fenêtre / formulaire ---------- */
+.overlay{position:fixed;inset:0;z-index:100;background:#000000b3;display:flex;align-items:flex-start;justify-content:center;padding:32px 12px;overflow-y:auto}
+.modal{width:100%;max-width:46rem;background:#10151f;border:1px solid #ffffff24;border-radius:.6em;box-shadow:0 1.5em 3em #0000008c}
+.modal.sm2{max-width:26rem}
+.mh{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 22px;border-bottom:1px solid var(--line)}
+.mh h3{margin:0;font-size:18px;font-style:italic;text-transform:uppercase;letter-spacing:.04em}
+.x{width:34px;height:34px;border-radius:.4em;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:18px;line-height:1}
+.x:hover{color:#fff;border-color:var(--line2)}
+.mb{padding:20px 22px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.mb .full{grid-column:1/-1}
+.mf{display:flex;justify-content:flex-end;gap:10px;padding:16px 22px;border-top:1px solid var(--line);flex-wrap:wrap}
+label.f{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+label.f i{color:var(--g1);font-style:normal}
+.fi{width:100%;padding:11px 12px;color:#fff;font:inherit;font-size:14px;background:#080a0ec7;border:1px solid #ffffff24;border-radius:.5rem;outline:none;transition:border-color .15s}
+.fi:focus{border-color:#22d3ee8c}
+textarea.fi{resize:vertical;min-height:96px;line-height:1.5}
+.hint{margin-top:5px;font-size:11px;color:#ffffff59;line-height:1.4}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.chk{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);border-radius:.45em;font-size:13px;color:#ffffffb3;cursor:pointer;user-select:none;background:#080a0e8c}
+.chk:has(input:checked){border-color:#22d3ee73;background:#22d3ee14;color:#fff}
+.chk input{accent-color:#22d3ee}
+.imgprev{margin-top:8px;max-height:110px;max-width:100%;border-radius:.4em;border:1px solid var(--line);display:block}
+details.adv{grid-column:1/-1;border:1px solid var(--line);border-radius:.6em;background:#0000002e}
+details.adv summary{padding:12px 14px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+details.adv .in{padding:4px 14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.err{margin:0 22px 14px;padding:10px 12px;border-radius:.5em;border:1px solid #f43f5e66;background:#f43f5e14;color:#fda4af;font-size:13px}
+
+.toast{position:fixed;z-index:200;left:50%;bottom:24px;transform:translateX(-50%);max-width:92vw;padding:12px 18px;border-radius:.6em;background:#10151f;border:1px solid #22d3ee59;box-shadow:0 12px 32px #0008;font-size:13px}
+.toast.bad{border-color:#f43f5e80;color:#fda4af}
+
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+  aside{position:static;height:auto;padding:12px 12px 0}
+  aside nav{flex-direction:row;overflow-x:auto;padding-bottom:6px}
+  .tab{width:auto;white-space:nowrap;padding:10px 12px;font-size:12px}
+  main{padding:12px 16px 80px}
+  .mb,details.adv .in{grid-template-columns:1fr}
+  .who span{display:none}
+}
+@media (max-width:560px){
+  .thumb{display:none}
+  .acts{flex-direction:column}
+  .ttl b{font-size:15px}
+}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true">
+  <div class="veil"></div><div class="glow g1"></div><div class="glow g2"></div>
+  <svg class="sparkle tw" style="left:6%;top:18%;width:40px;height:40px;opacity:.8" viewBox="0 0 24 24"><path fill="#22d3ee" d="M12 0c.45 6.15 1.85 9.55 4.05 11.2C18.35 12.85 21.8 13.6 24 12c-6.15.45-9.55 1.85-11.2 4.05C11.15 18.35 10.4 21.8 12 24c-.45-6.15-1.85-9.55-4.05-11.2C5.65 11.15 2.2 10.4 0 12c6.15-.45 9.55-1.85 11.2-4.05C12.85 5.65 13.6 2.2 12 0z"/></svg>
+  <svg class="sparkle tw2" style="right:8%;top:28%;width:28px;height:28px;opacity:.7" viewBox="0 0 24 24"><path fill="#3b82f6" d="M12 0c.45 6.15 1.85 9.55 4.05 11.2C18.35 12.85 21.8 13.6 24 12c-6.15.45-9.55 1.85-11.2 4.05C11.15 18.35 10.4 21.8 12 24c-.45-6.15-1.85-9.55-4.05-11.2C5.65 11.15 2.2 10.4 0 12c6.15-.45 9.55-1.85 11.2-4.05C12.85 5.65 13.6 2.2 12 0z"/></svg>
+  <svg class="sparkle tw" style="left:12%;bottom:16%;width:24px;height:24px;opacity:.6" viewBox="0 0 24 24"><path fill="#3b82f6" d="M12 0c.45 6.15 1.85 9.55 4.05 11.2C18.35 12.85 21.8 13.6 24 12c-6.15.45-9.55 1.85-11.2 4.05C11.15 18.35 10.4 21.8 12 24c-.45-6.15-1.85-9.55-4.05-11.2C5.65 11.15 2.2 10.4 0 12c6.15-.45 9.55-1.85 11.2-4.05C12.85 5.65 13.6 2.2 12 0z"/></svg>
+  <svg class="sparkle tw2" style="right:14%;bottom:22%;width:36px;height:36px;opacity:.75" viewBox="0 0 24 24"><path fill="#22d3ee" d="M12 0c.45 6.15 1.85 9.55 4.05 11.2C18.35 12.85 21.8 13.6 24 12c-6.15.45-9.55 1.85-11.2 4.05C11.15 18.35 10.4 21.8 12 24c-.45-6.15-1.85-9.55-4.05-11.2C5.65 11.15 2.2 10.4 0 12c6.15-.45 9.55-1.85 11.2-4.05C12.85 5.65 13.6 2.2 12 0z"/></svg>
+</div>
+
+<header class="top">
+  <a class="brand" href="./"><img src="logo.png" alt="" /><span><b class="grad">CG Launcher</b><small>ADMINISTRATION</small></span></a>
+  <div class="who hidden" id="who"><span id="whoName"></span><button class="ghost sm" id="logout" type="button">Déconnexion</button></div>
+</header>
+
+<!-- Connexion -->
+<section class="center" id="loginView">
+  <div class="hero">
+    <span class="pill"><b>Espace réservé</b></span>
+    <h1>Catalogue<span class="grad">CG Launcher</span></h1>
+    <p>Ajoute, modifie ou retire un contenu : il apparaît dans l'application pour tout le monde.</p>
+    <button class="cta" id="loginBtn" type="button">Se connecter avec Discord</button>
+    <div class="note">Seul le compte autorisé peut publier.</div>
+    <div class="msg err hidden" id="loginMsg"></div>
+  </div>
+</section>
+
+<!-- Catalogue -->
+<div class="layout hidden" id="appView">
+  <aside><nav id="tabs" aria-label="Catégories"></nav></aside>
+  <main><div class="wrap">
+    <header class="head">
+      <span class="big" id="bigNum">01</span>
+      <span class="pill"><b id="chap">Chapitre 01</b></span>
+      <h2 id="catTitle" class="grad"></h2>
+      <p id="catDesc"></p>
+    </header>
+    <div class="bar">
+      <button class="cta" id="addBtn" type="button">+ Ajouter</button>
+      <input class="fi search" id="search" type="search" placeholder="Rechercher…" aria-label="Rechercher" />
+      <span class="grow"></span>
+      <button class="ghost sm" id="refresh" type="button">Actualiser</button>
+    </div>
+    <ol class="list" id="list"></ol>
+    <div class="empty hidden" id="empty"></div>
+  </div></main>
+</div>
+
+<div id="modalHost"></div>
+<div class="toast hidden" id="toast" role="status"></div>
+
+<script>
+/* ===== Réglages ===== */
+const CATALOG_URL = 'https://cg-catalog.perletqn.workers.dev';
+const CLIENT_ID = '1569619694019936347';
+
+/* ===== Catégories et formulaires (mêmes champs que l'application) ===== */
+const GAME_CATS = ['Multijoueur Disponible','Multijoueur NON Disponible','Solo','Early Access','Pegi +18','Hypervisor','JEUX PC','JEUX SONY PC'];
+const PLATFORMS = ['PC Windows','MAC APPLE'];
+const STREAM = ['Netflix','Prime Video','Disney+','Crunchyroll','Apple TV+','Autre'];
+
+const URLS = [
+  {k:'downloadUrl',l:'Lien de téléchargement',t:'url'},
+  {k:'coverUrl',l:'Image de couverture (URL)',t:'url',img:1},
+  {k:'bannerUrl',l:'Bannière (URL)',t:'url',img:1},
+];
+const CATS = {
+  games:{ name:'Jeux', title:'Jeux', desc:'Les jeux proposés dans l\'application.',
+    icon:'<path d="M6 12h4M8 10v4M15 13h.01M18 11h.01"/><rect x="2" y="6" width="20" height="12" rx="4"/>',
+    sub:i=>[i.version&&'v'+i.version,(i.categories||[]).join(' • ')].filter(Boolean).join('  ·  '),
+    fields:[
+      {k:'title',l:'Titre du jeu',t:'text',req:1,full:1},
+      {k:'version',l:'Version',t:'text',ph:'Ex : V.1.0.5'},
+      {k:'badge',l:'Badge (tag)',t:'text',ph:'NOUVEAUTÉ, PROMO, EXCLU'},
+      {k:'categories',l:'Catégories',t:'checks',opts:GAME_CATS,full:1},
+      {k:'description',l:'Description du jeu',t:'area',full:1},
+      {k:'requirements',l:'Configuration requise',t:'area',full:1,hint:'Une ligne = une puce.'},
+      ...URLS.map(u=>({...u,full:u.k==='downloadUrl'})),
+    ],
+    adv:[
+      {k:'publisher',l:'Éditeur',t:'text'},{k:'genre',l:'Genre',t:'text'},
+      {k:'sizeGb',l:'Taille (Go)',t:'number'},{k:'releaseDate',l:'Date de sortie',t:'text',ph:'2026-11-18'},
+      {k:'rating',l:'Note (0 à 5)',t:'number',step:'0.1'},{k:'trailerUrl',l:'Bande-annonce (URL)',t:'url'},
+      {k:'isFree',l:'Jeu gratuit',t:'bool'},
+    ]},
+  software:{ name:'Logiciels', title:'Logiciels', desc:'Les logiciels PC et Mac.',
+    icon:'<path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 12 10 5 10-5"/><path d="m2 17 10 5 10-5"/>',
+    sub:i=>[i.publisher,i.version&&'v'+i.version,(i.platforms||[]).join(' • ')].filter(Boolean).join('  ·  '),
+    fields:[
+      {k:'title',l:'Nom du logiciel',t:'text',req:1,full:1},
+      {k:'publisher',l:'Éditeur',t:'text'},{k:'version',l:'Version',t:'text'},
+      {k:'category',l:'Catégorie',t:'text',ph:'Communication, Streaming, Création 3D…'},
+      {k:'badge',l:'Badge (tag)',t:'text'},
+      {k:'platforms',l:'Plateformes',t:'checks',opts:PLATFORMS,full:1},
+      {k:'description',l:'Description',t:'area',full:1},
+      {k:'requirements',l:'Configuration requise',t:'area',full:1,hint:'Une ligne = une puce.'},
+      ...URLS.map(u=>({...u,full:u.k==='downloadUrl'})),
+    ],
+    adv:[
+      {k:'sizeGb',l:'Taille (Go)',t:'number'},{k:'releaseDate',l:'Date de sortie',t:'text'},
+      {k:'rating',l:'Note (0 à 5)',t:'number',step:'0.1'},{k:'trailerUrl',l:'Vidéo de présentation (URL)',t:'url'},
+      {k:'isFree',l:'Logiciel gratuit',t:'bool'},
+    ]},
+  graphics:{ name:'Packs graphiques', title:'Packs graphiques', desc:'Packs, presets et ressources de création.',
+    icon:'<circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.4-.3-.4-.5-.9-.5-1.4 0-1.1.9-2 2-2H17a5 5 0 0 0 5-5c0-4.4-4.5-8.2-10-8.2Z"/>',
+    sub:i=>[i.publisher,i.version&&'v'+i.version,(i.platforms||[]).join(' • ')].filter(Boolean).join('  ·  '),
+    fields:null /* identique aux logiciels */, adv:null },
+  media:{ name:'Films, séries & animés', title:'Films, séries & animés', desc:'Les films, séries et animés à regarder.',
+    icon:'<rect x="2" y="7" width="20" height="15" rx="2"/><path d="m17 2-5 5-5-5"/>',
+    sub:i=>[({film:'Film',serie:'Série',anime:'Animé'})[i.type],i.studio,i.releaseYear].filter(Boolean).join('  ·  '),
+    fields:[
+      {k:'type',l:'Type',t:'select',opts:[['film','Film'],['serie','Série'],['anime','Animé']],req:1},
+      {k:'title',l:'Titre',t:'text',req:1},
+      {k:'studio',l:'Studio / Plateforme d\'origine',t:'text',ph:'Netflix Original'},{k:'genre',l:'Genre',t:'text',ph:'Action / Science-Fiction'},
+      {k:'durationOrSeasons',l:'Durée ou saisons',t:'text',ph:'2h 15min  /  3 saisons'},{k:'episodeDuration',l:'Durée par épisode',t:'text',ph:'45 min'},
+      {k:'releaseYear',l:'Année',t:'text',ph:'2026'},{k:'platform',l:'Plateforme de streaming',t:'select',opts:STREAM.map(x=>[x,x])},
+      {k:'badge',l:'Badge (tag)',t:'text'},{k:'cast',l:'Distribution',t:'text'},
+      {k:'description',l:'Synopsis',t:'area',full:1},
+      {k:'infoUrl',l:'Lien Allociné / IMDb',t:'url',full:1},
+      {k:'downloadUrl',l:'Lien de téléchargement',t:'url',full:1},
+      {k:'coverUrl',l:'Affiche / Cover (URL)',t:'url',img:1},{k:'bannerUrl',l:'Bannière (URL)',t:'url',img:1},
+    ],
+    adv:[
+      {k:'rating',l:'Note (0 à 5)',t:'number',step:'0.1'},{k:'trailerUrl',l:'Bande-annonce (URL)',t:'url'},
+      {k:'streamUrl',l:'Lien de streaming',t:'url'},
+    ]},
+};
+CATS.graphics.fields = CATS.software.fields.map(f=>f.k==='title'?{...f,l:'Nom du pack'}:f);
+CATS.graphics.adv = CATS.software.adv.map(f=>f.k==='isFree'?{...f,l:'Pack gratuit'}:f);
+const ORDER = ['games','software','graphics','media'];
+
+/* ===== Utilitaires ===== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl = u => (/^https:\/\//i.test(u || '') ? u : '');
+const store = {
+  get(k){ try{ return sessionStorage.getItem(k) }catch{ return null } },
+  set(k,v){ try{ sessionStorage.setItem(k,v) }catch{} },
+  del(k){ try{ sessionStorage.removeItem(k) }catch{} },
+};
+let token = null, catalog = { version: 0, items: { games:[], software:[], graphics:[], media:[] } }, current = 'games', filter = '';
+
+function toast(text, bad){
+  const t = $('#toast'); t.textContent = text; t.className = 'toast' + (bad ? ' bad' : '');
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.add('hidden'), 5000);
+}
+async function api(path, body){
+  const res = await fetch(CATALOG_URL + path, body
+    ? { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ accessToken: token, ...body }) }
+    : undefined);
+  let data = {}; try { data = await res.json(); } catch {}
+  if (!res.ok) { const e = new Error(data.error || 'Erreur ' + res.status); e.status = res.status; throw e; }
+  return data;
+}
+
+/* ===== Connexion Discord ===== */
+const redirectUri = () => location.origin + location.pathname;
+function startLogin(){
+  const state = crypto.getRandomValues(new Uint32Array(4)).join('-');
+  store.set('cg_state', state);
+  location.href = 'https://discord.com/oauth2/authorize?client_id=' + CLIENT_ID +
+    '&response_type=token&redirect_uri=' + encodeURIComponent(redirectUri()) +
+    '&scope=' + encodeURIComponent('identify') + '&state=' + encodeURIComponent(state);
+}
+function readHash(){
+  if (!location.hash.includes('access_token')) return null;
+  const p = new URLSearchParams(location.hash.slice(1));
+  history.replaceState(null, '', location.pathname + location.search);
+  if (p.get('state') !== store.get('cg_state')) return { error: 'Connexion refusée (vérification de sécurité). Réessaie.' };
+  store.del('cg_state');
+  return { token: p.get('access_token') };
+}
+function showLogin(msg){
+  $('#loginView').classList.remove('hidden'); $('#appView').classList.add('hidden'); $('#who').classList.add('hidden');
+  const m = $('#loginMsg'); if (msg) { m.textContent = msg; m.classList.remove('hidden'); } else m.classList.add('hidden');
+}
+function logout(msg){ token = null; store.del('cg_token'); showLogin(msg); }
+
+async function boot(){
+  $('#loginBtn').onclick = startLogin;
+  $('#logout').onclick = () => logout();
+  const h = readHash();
+  if (h?.error) return showLogin(h.error);
+  token = h?.token || store.get('cg_token');
+  if (!token) return showLogin();
+  try {
+    const me = await api('/admin/whoami', {});
+    store.set('cg_token', token);
+    $('#whoName').textContent = me.name; $('#who').classList.remove('hidden');
+    $('#loginView').classList.add('hidden'); $('#appView').classList.remove('hidden');
+    buildTabs(); await load(); render();
+  } catch (e) {
+    if (e.status === 403) logout("Ce compte Discord n'est pas autorisé à modifier le catalogue.");
+    else if (e.status === 401) logout('Ta session a expiré. Reconnecte-toi.');
+    else showLogin('Impossible de joindre le serveur. Réessaie dans un instant.');
+  }
+}
+
+/* ===== Données ===== */
+async function load(){
+  try { catalog = await api('/catalog'); }
+  catch { toast('Impossible de charger le catalogue.', true); }
+}
+
+/* ===== Affichage ===== */
+function buildTabs(){
+  $('#tabs').innerHTML = ORDER.map(c => `<button type="button" class="tab" data-c="${c}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${CATS[c].icon}</svg>
+    <span>${esc(CATS[c].name)}</span><span class="n" id="n-${c}"></span></button>`).join('');
+  document.querySelectorAll('.tab').forEach(b => b.onclick = () => { current = b.dataset.c; filter = ''; $('#search').value = ''; render(); });
+  $('#addBtn').onclick = () => openForm();
+  $('#refresh').onclick = async () => { await load(); render(); toast('Catalogue actualisé.'); };
+  $('#search').oninput = e => { filter = e.target.value.trim().toLowerCase(); render(); };
+}
+function render(){
+  const cfg = CATS[current], idx = ORDER.indexOf(current) + 1, n = String(idx).padStart(2, '0');
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.c === current));
+  ORDER.forEach(c => { const el = $('#n-' + c); if (el) el.textContent = (catalog.items[c] || []).length; });
+  $('#bigNum').textContent = n; $('#chap').textContent = 'Chapitre ' + n;
+  $('#catTitle').textContent = cfg.title; $('#catDesc').textContent = cfg.desc;
+  const all = (catalog.items[current] || []).slice().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  const items = filter ? all.filter(i => (i.title || '').toLowerCase().includes(filter)) : all;
+  $('#list').innerHTML = items.map((it, i) => {
+    const img = safeUrl(it.coverUrl);
+    return `<li><span class="idx">${String(i + 1).padStart(2, '0')}</span>
+      ${img ? `<img class="thumb" src="${esc(img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">` : '<span class="thumb"></span>'}
+      <div class="ttl"><b>${esc(it.title)}</b><span>${esc(cfg.sub(it)) || '&nbsp;'}</span></div>
+      <div class="acts"><button class="ghost sm" type="button" data-e="${esc(it.id)}">Modifier</button>
+      <button class="ghost sm danger" type="button" data-d="${esc(it.id)}">Supprimer</button></div></li>`;
+  }).join('');
+  $('#list').querySelectorAll('[data-e]').forEach(b => b.onclick = () => openForm(all.find(x => x.id === b.dataset.e)));
+  $('#list').querySelectorAll('[data-d]').forEach(b => b.onclick = () => confirmDelete(all.find(x => x.id === b.dataset.d)));
+  const empty = $('#empty');
+  empty.classList.toggle('hidden', items.length > 0);
+  empty.innerHTML = filter ? '<b>Aucun résultat</b>Aucun contenu ne correspond à cette recherche.'
+    : `<b>Rien pour l'instant</b>Clique sur « Ajouter » pour publier ton premier contenu dans « ${esc(cfg.name)} ».`;
+}
+
+/* ===== Formulaire ===== */
+function fieldHtml(f, item){
+  const v = item?.[f.k]; const id = 'f_' + f.k;
+  const lab = `<label class="f" for="${id}">${esc(f.l)}${f.req ? ' <i>*</i>' : ''}</label>`;
+  let ctl = '';
+  if (f.t === 'area') ctl = `<textarea class="fi" id="${id}" name="${f.k}">${esc(v)}</textarea>`;
+  else if (f.t === 'select') ctl = `<select class="fi" id="${id}" name="${f.k}">${f.opts.map(([val, lbl]) => `<option value="${esc(val)}"${v === val ? ' selected' : ''}>${esc(lbl)}</option>`).join('')}</select>`;
+  else if (f.t === 'checks') ctl = `<div class="checks" data-k="${f.k}">${f.opts.map(o => `<label class="chk"><input type="checkbox" value="${esc(o)}"${(v || []).includes(o) ? ' checked' : ''}> ${esc(o)}</label>`).join('')}</div>`;
+  else if (f.t === 'bool') return `<div><label class="chk"><input type="checkbox" name="${f.k}"${v ? ' checked' : ''}> ${esc(f.l)}</label></div>`;
+  else ctl = `<input class="fi" id="${id}" name="${f.k}" type="${f.t === 'number' ? 'number' : f.t === 'url' ? 'url' : 'text'}"${f.step ? ` step="${f.step}"` : ''}${f.t === 'number' ? ' min="0"' : ''} value="${esc(v ?? '')}" placeholder="${esc(f.ph || (f.t === 'url' ? 'https://…' : ''))}" autocomplete="off">`;
+  const prev = f.img ? `<img class="imgprev ${safeUrl(v) ? '' : 'hidden'}" data-prev="${f.k}" src="${esc(safeUrl(v))}" alt="" referrerpolicy="no-referrer">` : '';
+  return `<div class="${f.full ? 'full' : ''}">${lab}${ctl}${f.hint ? `<div class="hint">${esc(f.hint)}</div>` : ''}${prev}</div>`;
+}
+function openForm(item){
+  const cfg = CATS[current], editing = !!item;
+  $('#modalHost').innerHTML = `<div class="overlay" id="ov"><form class="modal" id="form" novalidate>
+    <div class="mh"><h3>${editing ? 'Modifier' : 'Ajouter'} — ${esc(cfg.name)}</h3><button class="x" type="button" id="xc" aria-label="Fermer">×</button></div>
+    <div class="mb">${cfg.fields.map(f => fieldHtml(f, item)).join('')}
+      <details class="adv"><summary>Options avancées</summary><div class="in">${cfg.adv.map(f => fieldHtml(f, item)).join('')}</div></details></div>
+    <div class="err hidden" id="ferr"></div>
+    <div class="mf"><button class="ghost" type="button" id="cancel">Annuler</button><button class="cta" type="submit" id="save">${editing ? 'Enregistrer' : 'Publier'}</button></div>
+  </form></div>`;
+  const close = () => { $('#modalHost').innerHTML = ''; };
+  $('#xc').onclick = close; $('#cancel').onclick = close;
+  $('#ov').addEventListener('mousedown', e => { if (e.target.id === 'ov') close(); });
+  $('#form').querySelectorAll('input[type=url]').forEach(inp => inp.addEventListener('input', () => {
+    const p = $(`[data-prev="${inp.name}"]`); if (!p) return;
+    const u = safeUrl(inp.value.trim()); p.src = u; p.classList.toggle('hidden', !u);
+  }));
+  $('#form').onsubmit = async e => {
+    e.preventDefault();
+    const out = {}; const all = [...cfg.fields, ...cfg.adv];
+    for (const f of all) {
+      if (f.t === 'checks') out[f.k] = [...$(`[data-k="${f.k}"]`).querySelectorAll('input:checked')].map(i => i.value);
+      else if (f.t === 'bool') out[f.k] = $(`[name="${f.k}"]`).checked;
+      else out[f.k] = $(`[name="${f.k}"]`).value.trim();
+    }
+    const err = $('#ferr');
+    if (!out.title) { err.textContent = 'Le titre est obligatoire.'; err.classList.remove('hidden'); return; }
+    for (const f of all) if (f.t === 'url' && out[f.k] && !/^https:\/\//i.test(out[f.k])) { err.textContent = `« ${f.l} » doit commencer par https://`; err.classList.remove('hidden'); return; }
+    if (editing) out.id = item.id;
+    const btn = $('#save'); btn.disabled = true; btn.textContent = 'Envoi…'; err.classList.add('hidden');
+    try {
+      const r = await api('/admin/save', { category: current, item: out });
+      catalog = { version: r.version, items: r.items }; close(); render();
+      toast(editing ? 'Modifications publiées.' : 'Contenu publié. Il apparaîtra dans l\'application d\'ici quelques minutes.');
+    } catch (ex) {
+      if (ex.status === 401) { close(); logout('Ta session a expiré. Reconnecte-toi.'); return; }
+      err.textContent = ex.message; err.classList.remove('hidden'); btn.disabled = false; btn.textContent = editing ? 'Enregistrer' : 'Publier';
+    }
+  };
+  setTimeout(() => $('#f_title')?.focus(), 30);
+}
+function confirmDelete(item){
+  if (!item) return;
+  $('#modalHost').innerHTML = `<div class="overlay" id="ov"><div class="modal sm2">
+    <div class="mh"><h3>Supprimer ?</h3></div>
+    <div style="padding:20px 22px;font-size:14px;line-height:1.6;color:#ffffffb3">« ${esc(item.title)} » sera retiré de l'application pour tout le monde.</div>
+    <div class="mf"><button class="ghost" type="button" id="cancel">Annuler</button><button class="cta" type="button" id="yes" style="background:#f43f5e;color:#fff">Supprimer</button></div></div></div>`;
+  const close = () => { $('#modalHost').innerHTML = ''; };
+  $('#cancel').onclick = close;
+  $('#yes').onclick = async () => {
+    try { const r = await api('/admin/delete', { category: current, id: item.id }); catalog = { version: r.version, items: r.items }; close(); render(); toast('Contenu supprimé.'); }
+    catch (ex) { close(); if (ex.status === 401) logout('Ta session a expiré. Reconnecte-toi.'); else toast(ex.message, true); }
+  };
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#modalHost').innerHTML = ''; });
+boot();
+</script>
+</body>
+</html>
