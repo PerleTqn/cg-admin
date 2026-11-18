@@ -409,7 +409,7 @@ function openForm(item){
   $('#ov').addEventListener('mousedown', e => { if (e.target.id === 'ov') close(); });
   $('#form').querySelectorAll('input[type=url]').forEach(inp => inp.addEventListener('input', () => {
     const p = $(`[data-prev="${inp.name}"]`); if (!p) return;
-    const u = safeUrl(inp.value.trim()); p.src = u; p.classList.toggle('hidden', !u);
+    const u = safeUrl(inp.value.trim().replace(/^http:\/\//i, 'https://')); p.src = u; p.classList.toggle('hidden', !u);
   }));
   $('#form').onsubmit = async e => {
     e.preventDefault();
@@ -417,6 +417,7 @@ function openForm(item){
     for (const f of all) {
       if (f.t === 'checks') out[f.k] = [...$(`[data-k="${f.k}"]`).querySelectorAll('input:checked')].map(i => i.value);
       else if (f.t === 'bool') out[f.k] = $(`[name="${f.k}"]`).checked;
+      else if (f.t === 'url') out[f.k] = $(`[name="${f.k}"]`).value.trim().replace(/^http:\/\//i, 'https://');
       else out[f.k] = $(`[name="${f.k}"]`).value.trim();
     }
     const err = $('#ferr');
