@@ -78,7 +78,7 @@ main{padding:28px 24px 80px;min-width:0}
 .head{position:relative;padding:8px 0 28px}
 .big{position:absolute;left:-6px;top:-.35em;font-size:clamp(6rem,13vw,10rem);font-weight:800;font-style:italic;line-height:1;color:transparent;-webkit-text-stroke:1.5px var(--g1);opacity:.25;pointer-events:none;user-select:none}
 .head .pill{position:relative}
-.head h2{position:relative;margin:16px 0 0;font-size:clamp(2.2rem,5vw,3.8rem);font-style:italic;text-transform:uppercase;font-weight:800;line-height:.95}
+.head h2{position:relative;margin:0;font-size:clamp(2.2rem,5vw,3.8rem);font-style:italic;text-transform:uppercase;font-weight:800;line-height:.95}
 .head p{position:relative;margin:14px 0 0;max-width:420px;color:#ffffff8c;font-size:14px;line-height:1.6}
 .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 18px}
 .bar .grow{flex:1}
@@ -178,8 +178,6 @@ details.adv .in{padding:4px 14px 16px;display:grid;grid-template-columns:1fr 1fr
   <aside><nav id="tabs" aria-label="Catégories"></nav></aside>
   <main><div class="wrap">
     <header class="head">
-      <span class="big" id="bigNum">01</span>
-      <span class="pill"><b id="chap">Chapitre 01</b></span>
       <h2 id="catTitle" class="grad"></h2>
       <p id="catDesc"></p>
     </header>
@@ -361,10 +359,10 @@ function buildTabs(){
   $('#search').oninput = e => { filter = e.target.value.trim().toLowerCase(); render(); };
 }
 function render(){
-  const cfg = CATS[current], idx = ORDER.indexOf(current) + 1, n = String(idx).padStart(2, '0');
+  const cfg = CATS[current];
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.c === current));
   ORDER.forEach(c => { const el = $('#n-' + c); if (el) el.textContent = (catalog.items[c] || []).length; });
-  $('#bigNum').textContent = n; $('#chap').textContent = 'Chapitre ' + n;
+  
   $('#catTitle').textContent = cfg.title; $('#catDesc').textContent = cfg.desc;
   const all = (catalog.items[current] || []).slice().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
   const items = filter ? all.filter(i => (i.title || '').toLowerCase().includes(filter)) : all;
